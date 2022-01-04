@@ -339,14 +339,13 @@ def timedelta_to_microseconds(value: dt.timedelta) -> int:
 def get_schema_requirements(schema_class: Schema | dict) -> dict:
     fields = {}
     for top_key, top_value in getattr(schema_class, "_declared_fields", schema_class).items():
-        print(top_key, top_value)
         field = {}
         for fkey, fvalue in top_value.__dict__.items():
             field['class_name'] = top_value.__class__.__name__
             if fkey in ['dump_default', 'load_default']:
                 field[fkey] = str(fvalue)
                 continue
-            if fkey in ['validator', 'validators']:
+            if fkey in ['validate', 'validators']:
                 field[fkey] = [x.__dict__ for x in fvalue]
                 continue
             if fkey in ['inner']:
