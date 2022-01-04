@@ -14,6 +14,7 @@ from email.utils import format_datetime, parsedate_to_datetime
 from pprint import pprint as py_pprint
 
 from marshmallow.base import FieldABC
+from marshmallow.schema import Schema
 from marshmallow.exceptions import FieldInstanceResolutionError
 from marshmallow.warnings import RemovedInMarshmallow4Warning
 
@@ -333,3 +334,25 @@ def timedelta_to_microseconds(value: dt.timedelta) -> int:
     https://github.com/python/cpython/blob/bb3e0c240bc60fe08d332ff5955d54197f79751c/Lib/datetime.py#L665-L667  # noqa: B950
     """
     return (value.days * (24 * 3600) + value.seconds) * 1000000 + value.microseconds
+
+
+def get_schema_requirements(schema_class: Schema | dict) -> dict:
+    fields = {}
+    for top_key, top_value in getattr(schema_class, "_declared_fields", schema_class).items():
+        print(top_key, top_value)
+        field = {}
+        for fkey, fvalue in top_value.__dict__.items():
+            field['class_name'] = top_value.__class__.__name__
+            if fkey in ['dump_default', 'load_default']:
+                field[fkey] = str(fvalue)
+                continue
+            if fkey in ['validator', 'validators']:
+                field[fkey] = [x.__dict__ for x in fvalue]
+                continue
+            if fkey in ['inner']:
+                field[fkey] = get_schema_requirements({'inner': fvalue}).pop('inner')
+                continue
+            field[fkey] = fvalue
+        fields[top_key] = field
+    return fields
+
