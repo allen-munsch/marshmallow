@@ -337,6 +337,8 @@ def timedelta_to_microseconds(value: dt.timedelta) -> int:
 
 
 def get_schema_requirements(schema_class: Schema | dict) -> dict:
+    """Given a Schema iterate over the _declared_fields and return dictionaries of the field dictionary
+    """
     fields = {}
     for top_key, top_value in getattr(schema_class, "_declared_fields", schema_class).items():
         field = {}
@@ -346,7 +348,10 @@ def get_schema_requirements(schema_class: Schema | dict) -> dict:
                 field[fkey] = str(fvalue)
                 continue
             if fkey in ['validate', 'validators']:
-                field[fkey] = [x.__dict__ for x in fvalue]
+                if isinstance(fvalue, list):
+                    field[fkey] = [x.__dict__ for x in fvalue]
+                else:
+                    field[fkey] = fvalue
                 continue
             if fkey in ['inner']:
                 field[fkey] = get_schema_requirements({'inner': fvalue}).pop('inner')
@@ -354,4 +359,5 @@ def get_schema_requirements(schema_class: Schema | dict) -> dict:
             field[fkey] = fvalue
         fields[top_key] = field
     return fields
+
 
